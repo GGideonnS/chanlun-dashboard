@@ -103,16 +103,8 @@ def find_zhongshu(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _to_pos(df, idx) -> int:
-    """Convert DataFrame index value to positional integer."""
-    try:
-        return df.index.get_loc(idx)
-    except (KeyError, TypeError):
-        return int(idx)
-
-
 def get_zhongshu_list(df: pd.DataFrame) -> list[dict]:
-    """Extract zhongshu as distinct zones for charting."""
+    """Extract zhongshu as distinct zones for charting. idx values are actual DataFrame index."""
     zones = []
     if not df["zs_active"].any():
         return zones
@@ -134,8 +126,8 @@ def get_zhongshu_list(df: pd.DataFrame) -> list[dict]:
             if period != current_period:
                 if current_period is not None:
                     zones.append({
-                        "start_idx": _to_pos(df, current_start),
-                        "end_idx": _to_pos(df, current_end),
+                        "start_idx": current_start,
+                        "end_idx": current_end,
                         "zg": float(current_zg),
                         "zd": float(current_zd),
                         "period": int(current_period),
@@ -149,8 +141,8 @@ def get_zhongshu_list(df: pd.DataFrame) -> list[dict]:
         else:
             if current_period is not None:
                 zones.append({
-                    "start_idx": _to_pos(df, current_start),
-                    "end_idx": _to_pos(df, current_end),
+                    "start_idx": current_start,
+                    "end_idx": current_end,
                     "zg": float(current_zg),
                     "zd": float(current_zd),
                     "period": int(current_period),
@@ -160,8 +152,8 @@ def get_zhongshu_list(df: pd.DataFrame) -> list[dict]:
 
     if current_period is not None:
         zones.append({
-            "start_idx": _to_pos(df, current_start),
-            "end_idx": _to_pos(df, current_end),
+            "start_idx": current_start,
+            "end_idx": current_end,
             "zg": float(current_zg),
             "zd": float(current_zd),
             "period": int(current_period),

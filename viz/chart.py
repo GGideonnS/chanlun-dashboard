@@ -38,8 +38,24 @@ def build_chanlun_chart(df: pd.DataFrame, meta: dict) -> go.Figure:
     """Build interactive Plotly chart with Candlestick + Chan Theory + MACD."""
 
     plot_df, date_col, o, h, l, c = _get_ohlc(df)
-    # Map processed index positions to dates
-    idx_to_date = plot_df[date_col].tolist()
+
+    # Index → position & date maps (handles both int and Timestamp indices)
+    pos_list = list(range(len(df)))
+    idx_to_pos = {idx: i for i, idx in enumerate(df.index)}
+    idx_to_date = {}
+    for idx, pos in idx_to_pos.items():
+        if pos < len(plot_df):
+            idx_to_date[idx] = plot_df[date_col].iloc[pos]
+        else:
+            idx_to_date[idx] = str(idx)
+
+    def _get_date(idx):
+        """Get date string for an index value."""
+        return idx_to_date.get(idx, str(idx))
+
+    def _get_pos(idx):
+        """Get positional index for an index value. Falls back to int()."""
+        return idx_to_pos.get(idx, int(idx) if not hasattr(idx, 'strftime') else 0)
 
     # ── Subplots ───────────────────────────────────────────────────
     fig = make_subplots(
@@ -103,8 +119,8 @@ def build_chanlun_chart(df: pd.DataFrame, meta: dict) -> go.Figure:
     # ── Bi strokes ──────────────────────────────────────────────────
     bi_segs = get_bi_segments(df)
     for i, seg in enumerate(bi_segs):
-        s_date = idx_to_date[seg["start_idx"]] if seg["start_idx"] < len(idx_to_date) else ""
-        e_date = idx_to_date[seg["end_idx"]] if seg["end_idx"] < len(idx_to_date) else ""
+        s_date = _get_date(seg["start_idx"])
+        e_date = _get_date(seg["end_idx"])
         dir_cn = "向上笔 ↑" if seg["direction"] == "up" else "向下笔 ↓"
         pct = (
             abs(seg["end_val"] - seg["start_val"]) / seg["start_val"] * 100
@@ -132,8 +148,8 @@ def build_chanlun_chart(df: pd.DataFrame, meta: dict) -> go.Figure:
     # ── Zhongshu ────────────────────────────────────────────────────
     zhongshu_zones = get_zhongshu_list(df)
     for zs in zhongshu_zones:
-        s_date = idx_to_date[zs["start_idx"]] if zs["start_idx"] < len(idx_to_date) else ""
-        e_date = idx_to_date[zs["end_idx"]] if zs["end_idx"] < len(idx_to_date) else ""
+        s_date = _get_date(zs["start_idx"])
+        e_date = _get_date(zs["end_idx"])
         seg_count = zs.get("segment_count", 3)
         width_pct = (zs["zg"] - zs["zd"]) / zs["zd"] * 100 if zs["zd"] else 0
 

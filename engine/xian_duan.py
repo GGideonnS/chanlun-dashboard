@@ -74,16 +74,8 @@ def build_xian_duan(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _to_pos(df, idx) -> int:
-    """Convert DataFrame index value to positional integer."""
-    try:
-        return df.index.get_loc(idx)
-    except (KeyError, TypeError):
-        return int(idx)
-
-
 def get_xd_segments(df: pd.DataFrame) -> list[dict]:
-    """Extract Xian Duan segments for charting."""
+    """Extract Xian Duan segments for charting. idx values are actual DataFrame index."""
     segments = []
     start_points = df[df["xd_start"]]
     end_points = df[df["xd_end"]]
@@ -91,8 +83,8 @@ def get_xd_segments(df: pd.DataFrame) -> list[dict]:
     for i, (_, end_row) in enumerate(end_points.iterrows()):
         if i < len(start_points):
             seg = {
-                "start_idx": _to_pos(df, start_points.index[i]),
-                "end_idx": _to_pos(df, end_row.name),
+                "start_idx": start_points.index[i],
+                "end_idx": end_row.name,
                 "high": float(end_row["xd_high"]) if pd.notna(end_row["xd_high"]) else None,
                 "low": float(end_row["xd_low"]) if pd.notna(end_row["xd_low"]) else None,
             }
