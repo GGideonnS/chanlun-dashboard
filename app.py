@@ -142,6 +142,14 @@ if submitted and symbol_input:
                 from engine.buy_sell_points import find_buy_sell_points
                 df = find_buy_sell_points(df)
 
+            # Clean all boolean columns — fill NaN with False
+            bool_cols = [c for c in df.columns if c.startswith((
+                "top_fractal", "bottom_fractal", "bi_", "xd_",
+                "zs_", "buy_", "sell_", "top_div", "bottom_div",
+            ))]
+            for col in bool_cols:
+                df[col] = df[col].fillna(False).astype(bool)
+
             st.session_state.df = df
             st.session_state.analyzed = True
 

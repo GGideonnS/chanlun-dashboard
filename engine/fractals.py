@@ -174,4 +174,8 @@ def find_fractals(df: pd.DataFrame, use_containment: bool = False) -> pd.DataFra
         df = process_containment(df)
     df = detect_fractals(df)
     df = validate_fractals(df)
+    # Fill NaN in boolean columns after processing
+    for col in ["top_fractal", "bottom_fractal"]:
+        if col in df.columns:
+            df[col] = df[col].fillna(False).astype(bool)
     return df

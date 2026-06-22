@@ -67,8 +67,8 @@ def build_chanlun_chart(df: pd.DataFrame, meta: dict) -> go.Figure:
     )
 
     # ── Fractal markers ─────────────────────────────────────────────
-    top_frac = plot_df[plot_df["top_fractal"]]
-    bottom_frac = plot_df[plot_df["bottom_fractal"]]
+    top_frac = plot_df[plot_df.get("top_fractal", pd.Series(False, index=plot_df.index)).fillna(False)]
+    bottom_frac = plot_df[plot_df.get("bottom_fractal", pd.Series(False, index=plot_df.index)).fillna(False)]
 
     for frac_df, direction, color_key, desc_key in [
         (top_frac, "顶分型 → 上涨笔可能结束", theme.TOP_FRACTAL_COLOR, "top"),
