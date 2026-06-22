@@ -112,8 +112,8 @@ if submitted and symbol_input:
 
     with st.spinner(f"正在获取 {symbol} {level} 数据..."):
         try:
-            # Try cache first
-            df = get_cached(symbol, level)
+            # Skip cache if it might be from old version — force fresh fetch
+            df = None  # Force fresh fetch to avoid stale cached data with old index types
             meta = None
 
             if df is None:
@@ -154,7 +154,10 @@ if submitted and symbol_input:
             st.session_state.analyzed = True
 
         except Exception as e:
+            import traceback
             st.error(f"❌ 数据获取失败: {e}")
+            with st.expander("🔧 调试信息"):
+                st.code(traceback.format_exc())
             st.session_state.analyzed = False
 
 
