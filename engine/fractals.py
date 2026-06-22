@@ -22,6 +22,8 @@ def process_containment(df: pd.DataFrame) -> pd.DataFrame:
     for col in ["open", "high", "low", "close"]:
         df[f"raw_{col}"] = df[col]
     df["direction"] = 0  # 0=unknown, 1=up, -1=down
+    # Preserve original date for each bar
+    df["_date"] = df.index
 
     # Determine initial direction
     for i in range(1, len(df)):
@@ -61,7 +63,12 @@ def process_containment(df: pd.DataFrame) -> pd.DataFrame:
         else:
             processed_rows.append(curr.to_dict())
 
-    result = pd.DataFrame(processed_rows, index=range(len(processed_rows)))
+    # Use preserved dates as index
+    dates = [r.get("_date", i) for i, r in enumerate(processed_rows)]
+    result = pd.DataFrame(processed_rows)
+    # Drop the _date column from data, use it as index
+    result.index = pd.Index(dates)
+    result = result.drop(columns=["_date"], errors="ignore")
     for col in ["open", "high", "low", "close", "volume"]:
         if col not in result.columns:
             result[col] = np.nan

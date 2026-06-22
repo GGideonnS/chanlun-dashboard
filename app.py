@@ -8,6 +8,7 @@ Usage:
 """
 
 import streamlit as st
+import numpy as np
 import pandas as pd
 
 from data import fetch_stock_data
@@ -130,10 +131,13 @@ if submitted and symbol_input:
                     "bars": len(df), "latest_price": float(df["close"].iloc[-1]),
                 }
 
+            # Save raw df for chart display
+            df_raw = df.copy()
             st.session_state.meta = meta
 
-            with st.spinner("缠论分析中: 分型→笔→线段→中枢→背驰→买卖点..."):
-                df = find_fractals(df)
+            with st.spinner("缠论分析中: 包含处理→分型→笔→线段→中枢→背驰→买卖点..."):
+                # Chanlun pipeline WITH containment for accurate analysis
+                df = find_fractals(df, use_containment=True)
                 df = build_bi(df)
                 df = build_xian_duan(df)
                 df = find_zhongshu(df)
@@ -142,7 +146,7 @@ if submitted and symbol_input:
                 from engine.buy_sell_points import find_buy_sell_points
                 df = find_buy_sell_points(df)
 
-            # Clean all boolean columns — fill NaN with False
+            # Clean all boolean columns
             bool_cols = [c for c in df.columns if c.startswith((
                 "top_fractal", "bottom_fractal", "bi_", "xd_",
                 "zs_", "buy_", "sell_", "top_div", "bottom_div",
@@ -150,7 +154,68 @@ if submitted and symbol_input:
             for col in bool_cols:
                 df[col] = df[col].fillna(False).astype(bool)
 
-            st.session_state.df = df
+            # Build date-based mapping: processed index → raw df position
+            date_to_raw_pos = {}
+            for i, dt in enumerate(df_raw.index):
+                date_to_raw_pos[str(dt)[:10]] = i
+
+            def map_idx(idx_val):
+                """Map any index value to position in df_raw by date."""
+                # Try as positional index first
+                try:
+                    pos = int(idx_val)
+                    if 0 <= pos < len(df):
+                        dt = str(df.iloc[pos].name)[:10] if hasattr(df.iloc[pos], 'name') else str(df.index[pos])[:10]
+                        return date_to_raw_pos.get(dt, pos)
+                except:
+                    pass
+                # Try as date lookup
+                try:
+                    dt = str(idx_val)[:10]
+                    if dt in date_to_raw_pos:
+                        return date_to_raw_pos[dt]
+                except:
+                    pass
+                return 0
+
+            # Map engine segment indices to raw positions
+            def map_segments(segments):
+                mapped = []
+                for seg in segments:
+                    s = dict(seg)
+                    s["start_idx"] = map_idx(seg["start_idx"])
+                    s["end_idx"] = map_idx(seg["end_idx"])
+                    mapped.append(s)
+                return mapped
+
+            # Merge annotations from processed df back to raw df by date
+            df_annotated = df_raw.copy()
+            annot_cols = [
+                "top_fractal", "bottom_fractal", "fractal_value",
+                "bi_start", "bi_end", "bi_value", "bi_direction",
+                "xd_start", "xd_end", "xd_high", "xd_low",
+                "zs_active", "zs_zg", "zs_zd", "zs_period", "zs_segment_count",
+                "DIF", "DEA", "MACD_bar", "MACD_area",
+                "top_divergence", "bottom_divergence", "divergence_strength",
+                "buy_1", "buy_2", "buy_3", "sell_1", "sell_2", "sell_3", "signal",
+            ]
+            for col in annot_cols:
+                if col in df.columns:
+                    df_annotated[col] = False if "_" in col else np.nan
+            # Map by date
+            for idx, row in df.iterrows():
+                dt = str(idx)[:10]
+                for col in annot_cols:
+                    if col in df.columns and col in df_annotated.columns:
+                        if dt in df_annotated.index:
+                            df_annotated.loc[dt, col] = row[col]
+
+            # Fill NaN in booleans
+            for col in annot_cols:
+                if col in df_annotated.columns and df_annotated[col].dtype == bool:
+                    df_annotated[col] = df_annotated[col].fillna(False)
+
+            st.session_state.df = df_annotated
             st.session_state.analyzed = True
 
         except Exception as e:
