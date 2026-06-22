@@ -32,35 +32,38 @@ def generate_interpretation(df: pd.DataFrame, meta: dict) -> str:
 
     # ── 2. Zhongshu Status ────────────────────────────────────────
     zhongshu_list = get_zhongshu_list(df)
-    # Debug: dump raw zhongshu data
-    lines.append(f"<!-- DEBUG zs_count={len(zhongshu_list)} -->")
-    for i, z in enumerate(zhongshu_list):
-        lines.append(f"<!-- ZS#{z.get('period','?')}: zg={z.get('zg')} zd={z.get('zd')} seg={z.get('segment_count')} start={z.get('start_idx')} end={z.get('end_idx')} -->")
-
     zs_valid = False
+    current = close.iloc[-1]
+
     if zhongshu_list:
         zs = zhongshu_list[-1]
         zg = zs.get("zg", 0)
         zd = zs.get("zd", 0)
-        zs_valid = zg > zd > 0
+
+        # Only display if zg and zd are reasonable price values
+        if zg > 0 and zd > 0 and zg != zd:
+            zs_valid = True
+            if zg < zd:  # Swap if reversed
+                zg, zd = zd, zg
+
         if zs_valid:
-            current = close.iloc[-1]
-            width_pct = (zg - zd) / zd * 100 if zd > 0 else 0
+            width_pct = (zg - zd) / zd * 100
             lines.append(f"\n## 中枢分析")
             lines.append(f"- **当前中枢**: ¥{zd:.2f} — ¥{zg:.2f}（第{zs['period']}个中枢）")
             lines.append(f"- **中枢区间宽度**: ¥{zg - zd:.2f}（{width_pct:.1f}%）")
-
             if current > zg:
                 lines.append(f"- **当前位置**: 中枢上沿**上方** ¥{current - zg:.2f}")
             elif current < zd:
                 lines.append(f"- **当前位置**: 中枢下沿**下方** ¥{zd - current:.2f}")
             else:
                 lines.append(f"- **当前位置**: **中枢震荡中**（¥{current:.2f}）")
-
             seg_count = zs.get("segment_count", 3)
             if seg_count > 3:
                 lines.append(f"- **中枢延伸**: 已包含 {seg_count} 个线段")
-    if not zs_valid:
+        else:
+            lines.append(f"\n## 中枢分析\n- 中枢数据读取中... (zg={zg:.2f}, zd={zd:.2f})")
+
+    if not zs_valid and not zhongshu_list:
         lines.append(f"\n## 中枢分析\n- 当前级别尚未形成标准中枢（需至少3个线段重叠）")
 
     # ── 3. Latest Bi Status ───────────────────────────────────────
