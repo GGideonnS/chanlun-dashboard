@@ -1,0 +1,11 @@
+# ChanLun Dashboard
+
+__pycache__/
+*.pyc
+.streamlit/secrets.toml
+.env
+venv/
+.cache/
+*.spec
+build/
+dist/
