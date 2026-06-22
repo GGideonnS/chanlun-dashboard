@@ -28,7 +28,7 @@ def backtest_signals(df: pd.DataFrame, hold_days: list[int] = None) -> dict:
 
     signals = get_buy_sell_summary(df)
     if not signals:
-        return {"signals": [], "summary": {}, "hold_days": hold_days}
+        return {"signals": [], "summary": {}, "hold_days": hold_days, "total_signals": 0}
 
     # 构建日期→收盘价映射
     date_to_close = {}
@@ -109,11 +109,12 @@ def format_backtest_report(bt: dict) -> str:
     """格式化回测报告为 Markdown 文本。"""
     lines = ["## 历史回测结果\n"]
 
-    if bt["total_signals"] == 0:
+    if not bt or bt.get("total_signals", 0) == 0:
         lines.append("暂无历史信号数据可供回测。")
         return "\n".join(lines)
 
-    lines.append(f"**信号总数**: {bt['total_signals']} 个\n")
+    total = bt.get("total_signals", 0)
+    lines.append(f"**信号总数**: {total} 个\n")
 
     # 按持仓天数展示
     for days in bt["hold_days"]:
