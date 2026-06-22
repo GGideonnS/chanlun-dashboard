@@ -25,6 +25,11 @@ from engine import (
     get_trend_type,
     get_kiss_summary,
 )
+from engine.backtest import backtest_signals, format_backtest_report
+from engine.multi_level import (
+    analyze_single_level, compute_multi_level_resonance,
+    format_resonance_report,
+)
 from viz.chart import build_chanlun_chart
 from ui.interpretation import generate_interpretation
 from utils.symbol_resolver import search_suggestions, MARKET_LABELS
@@ -319,7 +324,57 @@ if st.session_state.analyzed and st.session_state.df is not None:
     text = generate_interpretation(df, meta)
     st.markdown(text)
 
-    # ━ Raw data toggle ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    # ━ Backtest ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    st.markdown("---")
+    with st.expander("📊 历史回测 — 信号胜率统计", expanded=False):
+        bt = backtest_signals(df)
+        bt_text = format_backtest_report(bt)
+        st.markdown(bt_text)
+
+    # ━ Multi-level Resonance ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    st.markdown("---")
+    with st.expander("🔄 多级别共振分析", expanded=True):
+        st.caption("同时分析多个时间级别的缠论信号，计算共振评分")
+
+        levels_to_analyze = st.multiselect(
+            "选择分析级别",
+            options=["daily", "30min", "60min", "weekly", "monthly"],
+            default=["daily", "60min", "weekly"],
+            format_func=lambda x: {
+                "daily": "日线", "30min": "30分钟",
+                "60min": "60分钟", "weekly": "周线", "monthly": "月线",
+            }[x],
+            key="resonance_levels",
+        )
+
+        if st.button("🔄 运行多级别分析", key="run_resonance"):
+            if len(levels_to_analyze) < 2:
+                st.warning("请至少选择2个级别")
+            else:
+                with st.spinner("正在分析多个级别..."):
+                    level_results = []
+                    progress = st.progress(0)
+
+                    for i, lvl in enumerate(levels_to_analyze):
+                        try:
+                            df_lvl, meta_lvl = fetch_stock_data(symbol, period=lvl)
+                            r = analyze_single_level(df_lvl, lvl)
+                            level_results.append(r)
+                            progress.progress((i + 1) / len(levels_to_analyze))
+                        except Exception as e:
+                            st.warning(f"{lvl} 级别获取失败: {e}")
+
+                    progress.empty()
+
+                    if level_results:
+                        resonance = compute_multi_level_resonance(level_results)
+                        resonance_text = format_resonance_report(resonance)
+                        st.markdown(resonance_text)
+
+    # ━ Auto-refresh status ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    st.caption(f"⏱ 数据更新时间: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')} | 点击🔄可重新分析")
+
+    # ━ Raw data toggle ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     with st.expander("📋 查看原始数据"):
         st.dataframe(df.tail(30), use_container_width=True)
 
