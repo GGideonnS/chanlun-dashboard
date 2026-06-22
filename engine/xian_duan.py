@@ -61,9 +61,10 @@ def build_xian_duan(df: pd.DataFrame) -> pd.DataFrame:
 
     # Mark on DataFrame
     for xd in xd_list:
-        if xd["start_idx"] < len(df):
+        # start_idx/end_idx may be Timestamps — df.loc handles both
+        if xd["start_idx"] in df.index:
             df.loc[xd["start_idx"], "xd_start"] = True
-        if xd["end_idx"] < len(df):
+        if xd["end_idx"] in df.index:
             df.loc[xd["end_idx"], "xd_end"] = True
             df.loc[xd["end_idx"], "xd_high"] = xd["high"]
             df.loc[xd["end_idx"], "xd_low"] = xd["low"]
