@@ -172,7 +172,6 @@ def find_fractals(df: pd.DataFrame, use_containment: bool = False) -> pd.DataFra
     """
     if use_containment:
         df = process_containment(df)
-    # Detect fractals directly on raw bars (or processed bars if use_containment=True)
     df = detect_fractals(df)
     df = validate_fractals(df)
     return df

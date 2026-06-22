@@ -75,10 +75,19 @@ def build_bi(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _to_pos(df, idx) -> int:
+    """Convert DataFrame index value to positional integer."""
+    try:
+        return df.index.get_loc(idx)
+    except KeyError:
+        return int(idx)
+
+
 def get_bi_segments(df: pd.DataFrame) -> list[dict]:
     """
     Extract bi segments as list for charting.
     Returns [{start_idx, end_idx, start_val, end_val, direction}, ...]
+    Uses positional index for compatibility with plot indexing.
     """
     segments = []
     fractal_indices = list(
@@ -96,8 +105,8 @@ def get_bi_segments(df: pd.DataFrame) -> list[dict]:
         ) else "down"
 
         segments.append({
-            "start_idx": int(start),
-            "end_idx": int(end),
+            "start_idx": _to_pos(df, start),
+            "end_idx": _to_pos(df, end),
             "start_val": float(
                 start_row["high"] if start_row.get("top_fractal") else start_row["low"]
             ),
