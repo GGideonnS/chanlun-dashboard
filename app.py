@@ -32,6 +32,10 @@ from engine.multi_level import (
 )
 from viz.chart import build_chanlun_chart
 from ui.interpretation import generate_interpretation
+from ui.components import (
+    render_sidebar, render_signal_summary,
+    render_quick_actions, render_empty_state,
+)
 from utils.symbol_resolver import search_suggestions, MARKET_LABELS
 from utils.cache import get_cached, set_cache
 
@@ -45,8 +49,21 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    .main .block-container { padding-top: 1rem; }
-    .stButton button { width: 100%; }
+    .main .block-container { padding-top: 1rem; max-width: 1200px; }
+    .stButton button { width: 100%; border-radius: 8px; }
+    .stMetric { background: #1a1a2e; padding: 1rem; border-radius: 8px; }
+    .stExpander { border: 1px solid #21262D; border-radius: 8px; }
+    h1 { color: #FFD54F; }
+    h2 { color: #C9D1D9; }
+    h3 { color: #8B949E; }
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
+    .stTabs [data-baseweb="tab"] {
+        padding: 10px 20px; border-radius: 8px 8px 0 0;
+        background: #161B22; color: #C9D1D9;
+    }
+    .stTabs [aria-selected="true"] {
+        background: #FFD54F; color: #0E1117;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -274,6 +291,10 @@ if submitted and symbol_input:
 if st.session_state.analyzed and st.session_state.df is not None:
     df = st.session_state.df
     meta = st.session_state.meta or {}
+    symbol = st.session_state.symbol
+
+    # ━ Sidebar ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    show_ma, show_bi, show_zs, show_signals = render_sidebar(meta, df)
 
     # ━ Price summary bar ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     latest = df["close"].iloc[-1]
@@ -296,28 +317,16 @@ if st.session_state.analyzed and st.session_state.df is not None:
     with cols[5]:
         st.caption(f"{meta.get('level_label', '')} | {meta.get('bars', 0)} 根K线")
 
+    # ━ Signal Summary Cards ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    render_signal_summary(df)
+
+    # ━ Quick Actions ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    render_quick_actions(symbol, meta)
+
     # ━ Chart ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     st.markdown("---")
     fig = build_chanlun_chart(df, meta)
     st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
-
-    # ━ Chan Theory Stats ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    bi_segs = get_bi_segments(df)
-    zhongshu_list = get_zhongshu_list(df)
-    buy_sell = get_buy_sell_summary(df)
-    has_div = df["top_divergence"].any() or df["bottom_divergence"].any()
-
-    c1, c2, c3, c4, c5 = st.columns(5)
-    with c1:
-        st.metric("笔 (Bi)", len(bi_segs))
-    with c2:
-        st.metric("中枢 (ZS)", len(zhongshu_list))
-    with c3:
-        st.metric("买卖点", len(buy_sell))
-    with c4:
-        st.metric("顶分型", int(df["top_fractal"].sum()))
-    with c5:
-        st.metric("底分型", int(df["bottom_fractal"].sum()))
 
     # ━ Interpretation ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     st.markdown("---")
@@ -380,40 +389,4 @@ if st.session_state.analyzed and st.session_state.df is not None:
 
 else:
     # ── Landing state ─────────────────────────────────────────────────────
-    st.markdown("---")
-    c1, c2, c3 = st.columns(3)
-
-    with c1:
-        st.markdown("### 🇺🇸 美股示例")
-        for code, name in [
-            ("AAPL", "Apple"), ("NVDA", "NVIDIA"), ("MSFT", "Microsoft"),
-            ("AMD", "AMD"), ("SMCI", "Super Micro"),
-        ]:
-            if st.button(f"{code} — {name}", key=f"us_{code}"):
-                st.session_state.symbol = code
-                st.rerun()
-
-    with c2:
-        st.markdown("### 🇭🇰 港股示例")
-        for code, name in [
-            ("0700.HK", "腾讯"), ("9988.HK", "阿里巴巴"),
-            ("3690.HK", "美团"), ("1810.HK", "小米"),
-        ]:
-            if st.button(f"{code} — {name}", key=f"hk_{code}"):
-                st.session_state.symbol = code
-                st.rerun()
-
-    with c3:
-        st.markdown("### 🇨🇳 A股示例")
-        for code, name in [
-            ("600519.SS", "茅台"), ("300750.SZ", "宁德时代"),
-            ("000858.SZ", "五粮液"), ("601318.SS", "中国平安"),
-        ]:
-            if st.button(f"{code} — {name}", key=f"cn_{code}"):
-                st.session_state.symbol = code
-                st.rerun()
-
-    st.info(
-        "💡 **缠论看板**基于缠中说禅《教你炒股票》理论，自动识别**分型、笔、线段、中枢、背驰、买卖点**。"
-        "输入代码或点击上方示例开始分析。支持美股、港股、A股，多级别切换。"
-    )
+    render_empty_state()
