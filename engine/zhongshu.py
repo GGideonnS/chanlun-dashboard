@@ -21,7 +21,8 @@ def find_zhongshu(df: pd.DataFrame) -> pd.DataFrame:
     df["zs_active"] = False
     df["zs_zg"] = np.nan  # Zhongshu upper bound
     df["zs_zd"] = np.nan  # Zhongshu lower bound
-    df["zs_period"] = 0   # Which Zhongshu this belongs to (1, 2, 3...)
+    df["zs_period"] = 0         # Which Zhongshu this belongs to (1, 2, 3...)
+    df["zs_segment_count"] = 0  # How many segments in this zhongshu
     df["zs_phase"] = ""   # "forming", "stable", "extending", "destroyed"
 
     xd_segs = get_xd_segments(df)
@@ -93,6 +94,7 @@ def find_zhongshu(df: pd.DataFrame) -> pd.DataFrame:
                 df.loc[idx, "zs_zg"] = zs["zg"]
                 df.loc[idx, "zs_zd"] = zs["zd"]
                 df.loc[idx, "zs_period"] = current_zs
+                df.loc[idx, "zs_segment_count"] = zs["segment_count"]
 
     return df
 
@@ -108,12 +110,14 @@ def get_zhongshu_list(df: pd.DataFrame) -> list[dict]:
     current_start = None
     current_end = None
     current_period = None
+    current_seg_count = 0
 
     for idx in df.index:
         if df.loc[idx, "zs_active"]:
             zg = df.loc[idx, "zs_zg"]
             zd = df.loc[idx, "zs_zd"]
             period = df.loc[idx, "zs_period"]
+            seg_count = df.loc[idx, "zs_segment_count"]
 
             if period != current_period:
                 if current_period is not None:
@@ -123,10 +127,12 @@ def get_zhongshu_list(df: pd.DataFrame) -> list[dict]:
                         "zg": float(current_zg),
                         "zd": float(current_zd),
                         "period": int(current_period),
+                        "segment_count": int(current_seg_count),
                     })
                 current_zg, current_zd = zg, zd
                 current_start = idx
                 current_period = period
+                current_seg_count = seg_count
             current_end = idx
         else:
             if current_period is not None:
@@ -136,6 +142,7 @@ def get_zhongshu_list(df: pd.DataFrame) -> list[dict]:
                     "zg": float(current_zg),
                     "zd": float(current_zd),
                     "period": int(current_period),
+                    "segment_count": int(current_seg_count),
                 })
                 current_period = None
 
@@ -146,6 +153,7 @@ def get_zhongshu_list(df: pd.DataFrame) -> list[dict]:
             "zg": float(current_zg),
             "zd": float(current_zd),
             "period": int(current_period),
+            "segment_count": int(current_seg_count),
         })
 
     return zones

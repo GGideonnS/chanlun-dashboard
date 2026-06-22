@@ -54,7 +54,8 @@ def generate_interpretation(df: pd.DataFrame, meta: dict) -> str:
             lines.append(f"  - 中枢震荡策略：下沿附近关注买点，上沿附近关注卖点")
 
         # Check zhongshu destruction/extension
-        if zs["segment_count"] > 3:
+        seg_count = zs.get("segment_count", 3)
+        if seg_count > 3:
             lines.append(f"- **中枢延伸**: 已包含 {zs['segment_count']} 个线段，中枢级别提升中")
     else:
         lines.append(f"\n## 中枢分析\n- 当前级别尚未形成标准中枢（需至少3个线段重叠）")
