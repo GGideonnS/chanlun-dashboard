@@ -105,7 +105,8 @@ def generate_interpretation(df: pd.DataFrame, meta: dict) -> str:
         if len(bi_segs) >= 2:
             prev_bi = bi_segs[-2]
             pct_prev = abs(prev_bi["end_val"] - prev_bi["start_val"]) / prev_bi["start_val"] * 100
-            lines.append(f"- **前一笔**: {prev_bi['direction']}，幅度 {pct_prev:.1f}%")
+            prev_dir = "向上笔" if prev_bi["direction"] == "up" else "向下笔"
+            lines.append(f"- **前一笔**: {prev_dir}，幅度 {pct_prev:.1f}%")
 
     # ── 4. Divergence Analysis ────────────────────────────────────
     has_top = df["top_divergence"].any()
