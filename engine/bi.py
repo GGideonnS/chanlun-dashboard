@@ -95,19 +95,26 @@ def get_bi_segments(df: pd.DataFrame) -> list[dict]:
         start_row = df.loc[start]
         end_row = df.loc[end]
 
-        direction = "up" if end_row.get("bi_value", 0) > start_row.get(
-            "high" if start_row.get("top_fractal") else "low", 0
-        ) else "down"
+        # Determine direction from price movement
+        start_val = float(
+            start_row["high"] if start_row.get("top_fractal") else start_row["low"]
+        )
+        end_val = float(
+            end_row["high"] if end_row.get("top_fractal") else end_row["low"]
+        )
+
+        # Use stored bi_direction if valid, else compute from prices
+        stored_dir = end_row.get("bi_direction", "")
+        if stored_dir in ("up", "down"):
+            direction = stored_dir
+        else:
+            direction = "up" if end_val > start_val else "down"
 
         segments.append({
             "start_idx": start,
             "end_idx": end,
-            "start_val": float(
-                start_row["high"] if start_row.get("top_fractal") else start_row["low"]
-            ),
-            "end_val": float(
-                end_row["high"] if end_row.get("top_fractal") else end_row["low"]
-            ),
-            "direction": str(end_row.get("bi_direction", direction)),
+            "start_val": start_val,
+            "end_val": end_val,
+            "direction": direction,
         })
     return segments
