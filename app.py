@@ -51,11 +51,19 @@ st.markdown("""
 <style>
     .main .block-container { padding-top: 1rem; max-width: 1200px; }
     .stButton button { width: 100%; border-radius: 8px; }
-    .stMetric { background: #1a1a2e; padding: 1rem; border-radius: 8px; }
+    .stMetric {
+        background: #1a1a2e; padding: 1rem; border-radius: 8px;
+        border: 1px solid #30363D;
+    }
+    .stMetric label { color: #E6EDF3 !important; font-weight: 600; }
+    .stMetric [data-testid="stMetricValue"] { color: #FFFFFF !important; font-weight: 700; }
+    .stMetric [data-testid="stMetricDelta"] { color: #8B949E !important; }
     .stExpander { border: 1px solid #21262D; border-radius: 8px; }
+    .stExpander summary { color: #E6EDF3; font-weight: 600; }
     h1 { color: #FFD54F; }
-    h2 { color: #C9D1D9; }
-    h3 { color: #8B949E; }
+    h2 { color: #E6EDF3; }
+    h3 { color: #C9D1D9; }
+    p, li, span { color: #C9D1D9; }
     .stTabs [data-baseweb="tab-list"] { gap: 8px; }
     .stTabs [data-baseweb="tab"] {
         padding: 10px 20px; border-radius: 8px 8px 0 0;
@@ -64,6 +72,8 @@ st.markdown("""
     .stTabs [aria-selected="true"] {
         background: #FFD54F; color: #0E1117;
     }
+    .stCaption { color: #8B949E; }
+    [data-testid="stMarkdown"] { color: #C9D1D9; }
 </style>
 """, unsafe_allow_html=True)
 
