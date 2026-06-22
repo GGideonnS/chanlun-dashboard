@@ -224,22 +224,35 @@ if submitted and symbol_input:
                 if col in df.columns:
                     df_annotated[col] = ""
 
-            # Map by date
+            # Map by date with type conversion
             for idx, row in df.iterrows():
                 dt = str(idx)[:10]
-                for col in bool_annot_cols + float_annot_cols + str_annot_cols:
-                    if col in df.columns and col in df_annotated.columns:
-                        if dt in df_annotated.index:
-                            val = row[col]
-                            # Convert NaN to default value
-                            if pd.isna(val):
-                                val = False if col in bool_annot_cols else (0.0 if col in float_annot_cols else "")
-                            df_annotated.loc[dt, col] = val
+                if dt not in df_annotated.index:
+                    continue
 
-            # Final safety: ensure all bool columns are clean
-            for col in bool_annot_cols:
-                if col in df_annotated.columns:
-                    df_annotated[col] = df_annotated[col].fillna(False).astype(bool)
+                for col in bool_annot_cols:
+                    if col in df.columns:
+                        val = row[col]
+                        if pd.isna(val):
+                            val = False
+                        df_annotated.loc[dt, col] = bool(val)
+
+                for col in float_annot_cols:
+                    if col in df.columns:
+                        val = row[col]
+                        if pd.isna(val):
+                            val = 0.0
+                        try:
+                            df_annotated.loc[dt, col] = float(val)
+                        except (ValueError, TypeError):
+                            df_annotated.loc[dt, col] = 0.0
+
+                for col in str_annot_cols:
+                    if col in df.columns:
+                        val = row[col]
+                        if pd.isna(val):
+                            val = ""
+                        df_annotated.loc[dt, col] = str(val)
 
             st.session_state.df = df_annotated
             st.session_state.analyzed = True
