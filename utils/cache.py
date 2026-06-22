@@ -8,7 +8,8 @@ from datetime import datetime, timezone
 import pandas as pd
 
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", ".cache")
-CACHE_TTL = 86400  # 24 hours
+CACHE_TTL = 14400  # 4 hours — ensure intraday freshness
+CACHE_VERSION = 2  # bump to invalidate old-format caches
 
 
 def _ensure_dir():

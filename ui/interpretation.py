@@ -150,6 +150,7 @@ def generate_interpretation(df: pd.DataFrame, meta: dict) -> str:
         lines.append(f"> 走势结构未完成，建议**等待中枢形成**后再操作")
 
     lines.append(f"\n---")
-    lines.append(f"*分析基于{level}K线，切换级别可获更多信号确认。缠论仅供参考，不构成投资建议。*")
+    lines.append(f"*分析基于{level}K线，切换级别可获更多信号确认。*")
+    lines.append(f"*📌 最新2-3根K线的分型/笔/中枢尚未确认，需后续走势验证。这是缠论特征，所有级别同理。缠论仅供参考，不构成投资建议。*")
 
     return "\n".join(lines)

@@ -112,8 +112,8 @@ if submitted and symbol_input:
 
     with st.spinner(f"正在获取 {symbol} {level} 数据..."):
         try:
-            # Skip cache if it might be from old version — force fresh fetch
-            df = None  # Force fresh fetch to avoid stale cached data with old index types
+            # Try cache first
+            df = get_cached(symbol, level)
             meta = None
 
             if df is None:
