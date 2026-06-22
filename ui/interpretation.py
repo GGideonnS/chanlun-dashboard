@@ -3,6 +3,7 @@
 import pandas as pd
 
 from engine import get_zhongshu_list, get_bi_segments, get_buy_sell_summary
+from engine.ma_system import get_trend_type, get_kiss_summary
 
 
 def generate_interpretation(df: pd.DataFrame, meta: dict) -> str:
@@ -29,6 +30,31 @@ def generate_interpretation(df: pd.DataFrame, meta: dict) -> str:
         trend = f"**{level}级别：上涨趋势**"
 
     lines.append(f"## 走势分析\n{trend}")
+
+    # ── 1.5 均线系统 (缠论核心框架) ─────────────────────────────────
+    kiss_info = get_kiss_summary(df)
+    trend_type = get_trend_type(df)
+
+    lines.append(f"\n## 均线系统")
+    position = "女上位" if kiss_info["in_female_position"] else "男上位"
+    lines.append(f"- **当前位置**: {position}（MA5 vs MA60）")
+
+    last_kiss = kiss_info.get("last_kiss", "none")
+    kiss_names = {"feiwen": "飞吻", "chunwen": "唇吻", "shiwen": "湿吻", "none": "无"}
+    lines.append(f"- **最近吻类型**: {kiss_names.get(last_kiss, last_kiss)}")
+
+    kiss_dist = kiss_info.get("kiss_distribution", {})
+    if kiss_dist:
+        lines.append(f"- **近期吻分布**: {', '.join(f'{kiss_names.get(k,k)}×{v}' for k,v in kiss_dist.items() if k != 'none')}")
+
+    lines.append(f"- **走势类型**: {trend_type}")
+
+    if last_kiss == "shiwen":
+        lines.append(f"  - ⚠️ 湿吻出现，关注趋势转折信号")
+    elif kiss_info["in_female_position"]:
+        lines.append(f"  - 短期均线在长期均线上方，多头格局")
+    else:
+        lines.append(f"  - 短期均线在长期均线下方，空头格局")
 
     # ── 2. Zhongshu Status ────────────────────────────────────────
     zhongshu_list = get_zhongshu_list(df)

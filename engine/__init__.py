@@ -7,6 +7,7 @@ from .zhongshu import find_zhongshu, get_zhongshu_list
 from .divergence import detect_divergence, compute_macd
 from .buy_sell_points import find_buy_sell_points, get_buy_sell_summary
 from .multi_level import compute_resonance
+from .ma_system import compute_ma, get_trend_type, get_kiss_summary
 
 __all__ = [
     "find_fractals",
@@ -20,4 +21,7 @@ __all__ = [
     "find_buy_sell_points",
     "get_buy_sell_summary",
     "compute_resonance",
+    "compute_ma",
+    "get_trend_type",
+    "get_kiss_summary",
 ]

@@ -21,6 +21,9 @@ from engine import (
     get_zhongshu_list,
     get_bi_segments,
     get_buy_sell_summary,
+    compute_ma,
+    get_trend_type,
+    get_kiss_summary,
 )
 from viz.chart import build_chanlun_chart
 from ui.interpretation import generate_interpretation
@@ -135,7 +138,10 @@ if submitted and symbol_input:
             df_raw = df.copy()
             st.session_state.meta = meta
 
-            with st.spinner("缠论分析中: 包含处理→分型→笔→线段→中枢→背驰→买卖点..."):
+            with st.spinner("缠论分析中: 均线→包含处理→分型→笔→线段→中枢→背驰→买卖点..."):
+                # 计算均线系统 (缠论核心框架)
+                df = compute_ma(df)
+
                 # Chanlun pipeline WITH containment for accurate analysis
                 df = find_fractals(df, use_containment=True)
                 df = build_bi(df)

@@ -7,14 +7,14 @@ from plotly.subplots import make_subplots
 from . import theme
 from engine import get_bi_segments, get_zhongshu_list, get_buy_sell_summary
 
-# Signal type descriptions for hover tooltips
+# Signal type descriptions for hover tooltips (基于缠论原定义)
 SIGNAL_DESC = {
-    "B1-一类买点": "一类买点：下跌背驰形成，女上位的最后一吻。买入信号最强，建议分批建仓。",
-    "B2-二类买点": "二类买点：女上位第一吻后的回调，不创新低。确认趋势反转，可加仓。",
-    "B3-三类买点": "三类买点：向上离开中枢后回测ZG不破。突破确认，轻仓追涨。",
-    "S1-一类卖点": "一类卖点：上涨背驰形成，男上位的最后一吻。卖出信号最强，建议减仓。",
-    "S2-二类卖点": "二类卖点：男上位第一吻后的反弹，不创新高。确认趋势转空，应止盈。",
-    "S3-三类卖点": "三类卖点：向下离开中枢后回抽ZD不破。跌破确认，及时止损。",
+    "B1-一类买点": "一类买点：男上位最后一吻后出现的背驰式下跌构成。买入信号最强，建议分批建仓。",
+    "B2-二类买点": "二类买点：女上位第一吻后出现的下跌构成，不创新低。确认趋势反转，可加仓。",
+    "B3-三类买点": "三类买点：次级别走势向上离开中枢，回试低点不跌破ZG。突破确认，轻仓追涨。",
+    "S1-一类卖点": "一类卖点：女上位最后一吻后出现的背驰式上涨构成。卖出信号最强，建议减仓。",
+    "S2-二类卖点": "二类卖点：男上位第一吻后出现的上涨构成，不创新高。确认趋势转空，应止盈。",
+    "S3-三类卖点": "三类卖点：次级别走势向下离开中枢，回抽高点不升破ZD。跌破确认，及时止损。",
 }
 
 FRACTAL_DESC = {
@@ -81,6 +81,29 @@ def build_chanlun_chart(df: pd.DataFrame, meta: dict) -> go.Figure:
         ),
         row=1, col=1,
     )
+
+    # ── Moving Averages (均线系统) ────────────────────────────────────
+    if "ma5" in df.columns:
+        ma_data = {
+            "ma5": ("MA5", "#FFD54F", 1),   # 黄色
+            "ma10": ("MA10", "#FF9800", 1),  # 橙色
+            "ma20": ("MA20", "#E91E63", 1.5), # 粉色
+            "ma60": ("MA60", "#9C27B0", 2),   # 紫色
+        }
+        for col, (name, color, width) in ma_data.items():
+            if col in plot_df.columns:
+                fig.add_trace(
+                    go.Scatter(
+                        x=plot_df[date_col],
+                        y=plot_df[col],
+                        mode="lines",
+                        name=name,
+                        line=dict(color=color, width=width),
+                        opacity=0.7,
+                        hovertemplate=f"{name}: ¥%{{y:.2f}}<extra></extra>",
+                    ),
+                    row=1, col=1,
+                )
 
     # ── Fractal markers ─────────────────────────────────────────────
     top_frac = plot_df[plot_df.get("top_fractal", pd.Series(False, index=plot_df.index)).fillna(False)]
