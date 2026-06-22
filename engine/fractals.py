@@ -165,9 +165,14 @@ def validate_fractals(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def find_fractals(df: pd.DataFrame) -> pd.DataFrame:
-    """Complete fractal detection pipeline."""
-    df = process_containment(df)
+def find_fractals(df: pd.DataFrame, use_containment: bool = False) -> pd.DataFrame:
+    """
+    Complete fractal detection pipeline.
+    use_containment=False preserves original K-lines for accurate chart display.
+    """
+    if use_containment:
+        df = process_containment(df)
+    # Detect fractals directly on raw bars (or processed bars if use_containment=True)
     df = detect_fractals(df)
     df = validate_fractals(df)
     return df

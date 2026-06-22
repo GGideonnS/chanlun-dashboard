@@ -272,7 +272,7 @@ def build_chanlun_chart(df: pd.DataFrame, meta: dict) -> go.Figure:
         paper_bgcolor=theme.BG_COLOR,
         plot_bgcolor=theme.PLOT_BG,
         font=dict(color=theme.TEXT_COLOR, size=11),
-        xaxis_rangeslider_visible=False,
+        dragmode="pan",               # pan mode, no box-zoom select
         height=theme.CHART_HEIGHT + theme.MACD_HEIGHT,
         margin=theme.MARGIN,
         legend=dict(
@@ -283,24 +283,31 @@ def build_chanlun_chart(df: pd.DataFrame, meta: dict) -> go.Figure:
         hoverlabel=dict(bgcolor="#1a1a2e", font_size=12, font_family="Microsoft YaHei"),
     )
 
-    # X-axis: date formatting
+    # X-axis: range slider (bottom scrollbar) + date labels
     fig.update_xaxes(
         showgrid=True, gridcolor=theme.GRID_COLOR, zeroline=False,
-        tickformat="%m/%d\n%Y", ticklabelmode="period",
+        tickformat="%m/%d\n%Y",
+        rangeslider_visible=True,
+        rangeslider_thickness=0.08,
         row=1, col=1,
     )
     fig.update_xaxes(
         showgrid=True, gridcolor=theme.GRID_COLOR, zeroline=False,
-        tickformat="%m/%d\n%Y", row=2, col=1,
-        title_text="日期",
+        tickformat="%m/%d\n%Y",
+        title_text="← 拖动下方滑条选择时间范围 | 滚轮缩放 | 拖拽平移 →",
+        row=2, col=1,
     )
     fig.update_yaxes(
-        title_text="价格 (¥)", showgrid=True,
-        gridcolor=theme.GRID_COLOR, row=1, col=1,
+        title_text="价格", showgrid=True,
+        gridcolor=theme.GRID_COLOR,
+        fixedrange=False,  # allow scroll-wheel y zoom
+        row=1, col=1,
     )
     fig.update_yaxes(
         title_text="MACD", showgrid=True,
-        gridcolor=theme.GRID_COLOR, row=2, col=1,
+        gridcolor=theme.GRID_COLOR,
+        fixedrange=False,
+        row=2, col=1,
     )
 
     return fig
