@@ -103,11 +103,12 @@ def render_signal_summary(df: pd.DataFrame):
     cols = st.columns(5)
 
     with cols[0]:
-        st.metric(
-            "笔 (Bi)",
-            len(bi_segs),
-            delta=f"最新: {'↑' if bi_segs and bi_segs[-1]['direction'] == 'up' else '↓'}",
-        )
+        if bi_segs:
+            last_dir = "↑" if bi_segs[-1]["direction"] == "up" else "↓"
+            delta = f"最新: {last_dir}"
+        else:
+            delta = None
+        st.metric("笔 (Bi)", len(bi_segs), delta=delta)
 
     with cols[1]:
         st.metric(
