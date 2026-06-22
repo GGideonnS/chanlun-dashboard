@@ -196,30 +196,50 @@ if submitted and symbol_input:
 
             # Merge annotations from processed df back to raw df by date
             df_annotated = df_raw.copy()
-            annot_cols = [
-                "top_fractal", "bottom_fractal", "fractal_value",
-                "bi_start", "bi_end", "bi_value", "bi_direction",
-                "xd_start", "xd_end", "xd_high", "xd_low",
-                "zs_active", "zs_zg", "zs_zd", "zs_period", "zs_segment_count",
-                "DIF", "DEA", "MACD_bar", "MACD_area",
-                "top_divergence", "bottom_divergence", "divergence_strength",
-                "buy_1", "buy_2", "buy_3", "sell_1", "sell_2", "sell_3", "signal",
+
+            # Define column types explicitly
+            bool_annot_cols = [
+                "top_fractal", "bottom_fractal",
+                "bi_start", "bi_end",
+                "xd_start", "xd_end",
+                "zs_active",
+                "top_divergence", "bottom_divergence",
+                "buy_1", "buy_2", "buy_3", "sell_1", "sell_2", "sell_3",
             ]
-            for col in annot_cols:
+            float_annot_cols = [
+                "fractal_value", "bi_value", "xd_high", "xd_low",
+                "zs_zg", "zs_zd", "zs_period", "zs_segment_count",
+                "DIF", "DEA", "MACD_bar", "MACD_area", "divergence_strength",
+            ]
+            str_annot_cols = ["bi_direction", "signal"]
+
+            # Initialize columns with correct types
+            for col in bool_annot_cols:
                 if col in df.columns:
-                    df_annotated[col] = False if "_" in col else np.nan
+                    df_annotated[col] = False
+            for col in float_annot_cols:
+                if col in df.columns:
+                    df_annotated[col] = 0.0
+            for col in str_annot_cols:
+                if col in df.columns:
+                    df_annotated[col] = ""
+
             # Map by date
             for idx, row in df.iterrows():
                 dt = str(idx)[:10]
-                for col in annot_cols:
+                for col in bool_annot_cols + float_annot_cols + str_annot_cols:
                     if col in df.columns and col in df_annotated.columns:
                         if dt in df_annotated.index:
-                            df_annotated.loc[dt, col] = row[col]
+                            val = row[col]
+                            # Convert NaN to default value
+                            if pd.isna(val):
+                                val = False if col in bool_annot_cols else (0.0 if col in float_annot_cols else "")
+                            df_annotated.loc[dt, col] = val
 
-            # Fill NaN in booleans
-            for col in annot_cols:
-                if col in df_annotated.columns and df_annotated[col].dtype == bool:
-                    df_annotated[col] = df_annotated[col].fillna(False)
+            # Final safety: ensure all bool columns are clean
+            for col in bool_annot_cols:
+                if col in df_annotated.columns:
+                    df_annotated[col] = df_annotated[col].fillna(False).astype(bool)
 
             st.session_state.df = df_annotated
             st.session_state.analyzed = True
