@@ -95,20 +95,28 @@ def detect_divergence(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _pos(df, idx) -> int:
+    """Convert any index value to positional integer."""
+    try:
+        return df.index.get_loc(idx)
+    except (KeyError, TypeError):
+        return int(idx)
+
+
 def _get_area_for_bi(df: pd.DataFrame, end_idx, direction: str) -> float:
     """Sum MACD area for the Bi ending at end_idx."""
+    end_pos = _pos(df, end_idx)
     # Look back to find the start of this Bi
-    start_idx = None
-    for idx in reversed(range(end_idx + 1)):
-        if idx < 0:
+    start_pos = None
+    for p in range(end_pos - 1, max(0, end_pos - 30) - 1, -1):
+        if p < 0:
             break
-        if df.iloc[idx].get("bi_start") and idx != end_idx:
-            start_idx = idx
+        if df["bi_start"].iloc[p] and p != end_pos:
+            start_pos = p
             break
 
-    if start_idx is None:
-        # Fallback: use last 10 bars
-        start_idx = max(0, end_idx - 10)
+    if start_pos is None:
+        start_pos = max(0, end_pos - 10)
 
-    area = df.iloc[start_idx : end_idx + 1]["MACD_area"].sum()
+    area = df["MACD_area"].iloc[start_pos: end_pos + 1].sum()
     return float(area)
