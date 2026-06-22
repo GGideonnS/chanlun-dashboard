@@ -96,6 +96,10 @@ def find_zhongshu(df: pd.DataFrame) -> pd.DataFrame:
                 df.loc[idx, "zs_period"] = current_zs
                 df.loc[idx, "zs_segment_count"] = zs["segment_count"]
 
+    # Ensure boolean columns have no NaN
+    for col in ["zs_active"]:
+        if col in df.columns:
+            df[col] = df[col].fillna(False).astype(bool)
     return df
 
 

@@ -72,6 +72,9 @@ def build_bi(df: pd.DataFrame) -> pd.DataFrame:
         df.loc[bi_item["end_idx"], "bi_value"] = bi_item["end_val"]
         df.loc[bi_item["end_idx"], "bi_direction"] = bi_item["direction"]
 
+    # Ensure boolean columns have no NaN
+    for col in ["bi_start", "bi_end"]:
+        df[col] = df[col].fillna(False).astype(bool)
     return df
 
 

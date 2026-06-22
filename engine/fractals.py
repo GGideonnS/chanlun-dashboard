@@ -124,6 +124,9 @@ def validate_fractals(df: pd.DataFrame) -> pd.DataFrame:
     Also ensure top > adjacent bottoms (no gap violations).
     """
     df = df.copy()
+    # Ensure boolean columns have no NaN (pandas 2.x compat)
+    df["top_fractal"] = df["top_fractal"].fillna(False).astype(bool)
+    df["bottom_fractal"] = df["bottom_fractal"].fillna(False).astype(bool)
 
     # Get fractal indices
     top_idx = list(df[df["top_fractal"]].index)

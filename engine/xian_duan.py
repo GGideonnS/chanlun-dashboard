@@ -68,6 +68,9 @@ def build_xian_duan(df: pd.DataFrame) -> pd.DataFrame:
             df.loc[xd["end_idx"], "xd_high"] = xd["high"]
             df.loc[xd["end_idx"], "xd_low"] = xd["low"]
 
+    # Ensure boolean columns have no NaN
+    for col in ["xd_start", "xd_end"]:
+        df[col] = df[col].fillna(False).astype(bool)
     return df
 
 
