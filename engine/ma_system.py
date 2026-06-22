@@ -106,13 +106,25 @@ def get_trend_type(df: pd.DataFrame) -> str:
 
 def get_kiss_summary(df: pd.DataFrame) -> dict:
     """获取最近的吻信息"""
+    default = {
+        "last_kiss": "none",
+        "kiss_distribution": {},
+        "in_male_position": False,
+        "in_female_position": False,
+    }
+
+    if "kiss_type" not in df.columns or "male_position" not in df.columns:
+        return default
+
     recent = df.tail(10)
 
-    kiss_counts = recent["kiss_type"].value_counts().to_dict()
-
-    return {
-        "last_kiss": recent["kiss_type"].iloc[-1],
-        "kiss_distribution": kiss_counts,
-        "in_male_position": bool(recent["male_position"].iloc[-1]),
-        "in_female_position": bool(recent["female_position"].iloc[-1]),
-    }
+    try:
+        kiss_counts = recent["kiss_type"].value_counts().to_dict()
+        return {
+            "last_kiss": recent["kiss_type"].iloc[-1],
+            "kiss_distribution": kiss_counts,
+            "in_male_position": bool(recent["male_position"].iloc[-1]),
+            "in_female_position": bool(recent["female_position"].iloc[-1]),
+        }
+    except Exception:
+        return default
