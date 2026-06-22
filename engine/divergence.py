@@ -51,7 +51,8 @@ def detect_divergence(df: pd.DataFrame) -> pd.DataFrame:
     # Compare adjacent up strokes for top divergence
     up_strokes = []
     for _, row in bi_ends.iterrows():
-        if row.get("bi_direction") == "up":
+        bd = str(row.get("bi_direction", "")).lower()
+        if bd == "up" or bd == "True":
             up_strokes.append(row.name)
 
     for j in range(1, len(up_strokes)):
@@ -73,7 +74,8 @@ def detect_divergence(df: pd.DataFrame) -> pd.DataFrame:
     # Compare adjacent down strokes for bottom divergence
     down_strokes = []
     for _, row in bi_ends.iterrows():
-        if row.get("bi_direction") == "down":
+        bd = str(row.get("bi_direction", "")).lower()
+        if bd == "down" or bd == "false":
             down_strokes.append(row.name)
 
     for j in range(1, len(down_strokes)):
