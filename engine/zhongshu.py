@@ -155,4 +155,22 @@ def get_zhongshu_list(df: pd.DataFrame) -> list[dict]:
             "segment_count": int(current_seg_count),
         })
 
-    return zones
+    # 去重：合并 ZG/ZD 相同的中枢
+    deduped = []
+    for z in zones:
+        is_dup = False
+        for existing in deduped:
+            if abs(z["zg"] - existing["zg"]) < 0.01 and abs(z["zd"] - existing["zd"]) < 0.01:
+                # 相同中枢，合并区间
+                existing["end_idx"] = z["end_idx"]
+                existing["segment_count"] = max(existing["segment_count"], z["segment_count"])
+                is_dup = True
+                break
+        if not is_dup:
+            deduped.append(z)
+
+    # 重新编号
+    for i, z in enumerate(deduped):
+        z["period"] = i + 1
+
+    return deduped
