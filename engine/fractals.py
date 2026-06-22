@@ -18,6 +18,9 @@ def process_containment(df: pd.DataFrame) -> pd.DataFrame:
         return df.copy()
 
     df = df.copy()
+    # Save raw OHLC before any merging (for chart display)
+    for col in ["open", "high", "low", "close"]:
+        df[f"raw_{col}"] = df[col]
     df["direction"] = 0  # 0=unknown, 1=up, -1=down
 
     # Determine initial direction
