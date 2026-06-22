@@ -41,26 +41,21 @@ def find_zhongshu(df: pd.DataFrame) -> pd.DataFrame:
             continue
 
         # Three segments must overlap
-        overlap_high = min(seg1["high"], seg2["high"], seg3["high"])
-        overlap_low = max(seg1["low"], seg2["low"], seg3["low"])
-
-        if overlap_high <= overlap_low:
-            continue
-
-        zg = overlap_low   # ZG = min of segment highs (the narrower bound)
-        zd = overlap_high  # ZD = max of segment lows — wait, let me fix
-
-        # Correct Zhongshu calculation:
-        # The overlap zone of N segments:
-        # High side: the LOWEST of all segment highs
-        # Low side: the HIGHEST of all segment lows
+        # Overlap zone: [max(lows), min(highs)]
         all_highs = [seg1["high"], seg2["high"], seg3["high"]]
         all_lows = [seg1["low"], seg2["low"], seg3["low"]]
 
-        # ZG = highest of the lows (最强支撑)
-        # ZD = lowest of the highs (最弱压力)
-        zg_val = max(all_lows)
-        zd_val = min(all_highs)
+        overlap_upper = min(all_highs)  # ZG — 中枢上沿
+        overlap_lower = max(all_lows)   # ZD — 中枢下沿
+
+        if overlap_upper <= overlap_lower:
+            continue
+        # Sanity: zg/zd must be reasonable relative to current price
+        if overlap_lower < 0.01:
+            continue
+
+        zg_val = overlap_upper
+        zd_val = overlap_lower
 
         # Extend to include more overlapping segments
         k = j + 3
@@ -68,10 +63,10 @@ def find_zhongshu(df: pd.DataFrame) -> pd.DataFrame:
             s = xd_segs[k]
             if s["high"] is None or s["low"] is None:
                 break
-            if s["high"] > zg_val and s["low"] < zd_val:
-                # This segment also overlaps — extend
-                zd_val = min(zd_val, s["high"])
-                zg_val = max(zg_val, s["low"])
+            # Check if this segment's range intersects the current overlap zone
+            if s["high"] > zd_val and s["low"] < zg_val:
+                zg_val = min(zg_val, s["high"])
+                zd_val = max(zd_val, s["low"])
                 k += 1
             else:
                 break
