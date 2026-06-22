@@ -40,7 +40,7 @@ def get_cached(symbol: str, period: str) -> pd.DataFrame | None:
     df = pd.DataFrame(data["rows"])
     if "Date" in df.columns or "index" in df.columns:
         idx_col = "Date" if "Date" in df.columns else "index"
-        df[idx_col] = pd.to_datetime(df[idx_col])
+        df[idx_col] = pd.to_datetime(df[idx_col], utc=True)
         df = df.set_index(idx_col)
     return df
 

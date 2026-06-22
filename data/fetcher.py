@@ -106,7 +106,7 @@ def fetch_stock_data(
     if "Datetime" in df.columns:
         df = df.rename(columns={"Datetime": "Date"})
     if "Date" in df.columns:
-        df["Date"] = pd.to_datetime(df["Date"])
+        df["Date"] = pd.to_datetime(df["Date"], utc=True)
     df = df.set_index("Date")
 
     # Standardize column names
